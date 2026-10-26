@@ -40,7 +40,11 @@ def scrape():
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(executable_path=os.environ.get("CHROMIUM_PATH") or None)
+        # BROWSER_CHANNEL=chrome uses the Google Chrome already installed on GitHub's machines.
+        browser = p.chromium.launch(
+            channel=os.environ.get("BROWSER_CHANNEL") or None,
+            executable_path=os.environ.get("CHROMIUM_PATH") or None,
+        )
         page = browser.new_page()
         # The site's table script hides columns (price, market value, date) and pages
         # the rows 5 at a time. Blocking it leaves the full table with every row and column.
