@@ -21,15 +21,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
+      # Only the small Python package is installed; the browser is the
+      # Google Chrome that GitHub's machines already have.
       - name: Install
-        run: |
-          pip install -r requirements.txt
-          playwright install --with-deps chromium
+        run: pip install -r requirements.txt
 
       - name: Check holdings
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          BROWSER_CHANNEL: chrome
         run: python tracker.py
 
       - name: Save new data
@@ -37,5 +39,8 @@ jobs:
           git config user.name "holdings-bot"
           git config user.email "holdings-bot@users.noreply.github.com"
           git add data docs
-          git diff --cached --quiet || git commit -m "Holdings update $(date -u +%Y-%m-%d)"
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m "Holdings update $(date -u +%Y-%m-%d)"
+            git pull --rebase
+            git push
+          fi
