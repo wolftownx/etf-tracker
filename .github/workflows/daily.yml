@@ -1,0 +1,40 @@
+name: Daily holdings check
+
+on:
+  schedule:
+    # Twice each weekday (times are UTC): mid-morning and evening US Eastern.
+    # The second run catches days the site updates late; a date already saved is skipped.
+    - cron: "17 14 * * 1-5"
+    - cron: "17 22 * * 1-5"
+  workflow_dispatch: # adds a "Run workflow" button for running it by hand
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Check holdings
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python tracker.py
+
+      - name: Save new data
+        run: |
+          git config user.name "holdings-bot"
+          git config user.email "holdings-bot@users.noreply.github.com"
+          git add data docs
+          git diff --cached --quiet || git commit -m "Holdings update $(date -u +%Y-%m-%d)"
+          git push
