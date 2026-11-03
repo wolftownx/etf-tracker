@@ -1,2 +1,6 @@
 date,compared_to,ticker,name,action,old_shares,new_shares,raw_change_pct,adjusted_change_pct,note
 2026-10-27,2026-10-26,VGSH,Vanguard Short-Term Treasury ETF,NEW POSITION,0,147402,,,
+2026-11-03,2026-11-02,DPZ,Domino's Pizza Inc,BUY,14904,20501,+37.6%,+34.4%,
+2026-11-03,2026-11-02,ITW,Illinois Tool Works Inc,BUY,21583,28438,+31.8%,+28.8%,
+2026-11-03,2026-11-02,MS,Morgan Stanley,BUY,30510,44110,+44.6%,+41.3%,
+2026-11-03,2026-11-02,VGSH,Vanguard Short-Term Treasury ETF,SELL,151866,70877,-53.3%,-54.4%,
