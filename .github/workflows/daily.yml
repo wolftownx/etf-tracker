@@ -7,6 +7,11 @@ on:
     - cron: "17 14 * * 1-5"
     - cron: "17 22 * * 1-5"
   workflow_dispatch: # adds a "Run workflow" button for running it by hand
+    inputs:
+      test_notification:
+        description: "Also send a test alert to my phone"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -27,6 +32,12 @@ jobs:
       # Google Chrome that GitHub's machines already have.
       - name: Install
         run: pip install -r requirements.txt
+
+      - name: Send test alert
+        if: ${{ inputs.test_notification }}
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python tracker.py --test-push
 
       - name: Check holdings
         env:
