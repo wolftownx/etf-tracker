@@ -17,6 +17,7 @@ import os
 import re
 import statistics
 import sys
+import time
 import urllib.request
 from datetime import datetime
 from pathlib import Path
@@ -26,7 +27,7 @@ FUND_URL = "https://tbgdividendgrowth.com/"
 FUND_NAME = "TBG"
 THRESHOLD = 0.03  # 3% - alert when a holding's (flow-adjusted) share change is bigger than this
 IGNORE = {"Cash&Other", "FGXXX"}  # cash / money-market lines change every day; never alert on them
-NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")  # phone alerts via the free ntfy app; blank = no push
+NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "").strip()  # phone alerts via the free ntfy app; blank = no push
 
 ROOT = Path(os.environ.get("DATA_ROOT", Path(__file__).parent))
 HOLDINGS_DIR = ROOT / "data" / "holdings"
@@ -35,7 +36,19 @@ DASHBOARD_FILE = ROOT / "docs" / "index.html"
 # -----------------------------------------------------------------------------
 
 
-def scrape():
+def scrape(attempts=3):
+    """Read the holdings, trying again a couple of times if the site hiccups."""
+    for attempt in range(1, attempts + 1):
+        try:
+            return scrape_once()
+        except Exception as e:
+            if attempt == attempts:
+                raise
+            print(f"Attempt {attempt} failed ({e.__class__.__name__}: {str(e).splitlines()[0][:200]}); retrying in 60s")
+            time.sleep(60)
+
+
+def scrape_once():
     """Return (as_of_date 'YYYY-MM-DD', list of holding dicts)."""
     from playwright.sync_api import sync_playwright
 
@@ -79,7 +92,7 @@ def scrape():
             dates.append(cell["EFFECTIVE_DATE"])
 
     if len(holdings) < 5 or not dates:
-        sys.exit(f"Only found {len(holdings)} holdings / no date - the site layout may have changed. Columns seen: {headers}")
+        raise RuntimeError(f"Only found {len(holdings)} holdings / no date - the site layout may have changed. Columns seen: {headers}")
     as_of = datetime.strptime(max(set(dates), key=dates.count), "%m/%d/%Y").strftime("%Y-%m-%d")
     return as_of, holdings
 
@@ -175,13 +188,16 @@ def record_alerts(as_of, prev_date, alerts):
 
 def send_push(title, message):
     if not NTFY_TOPIC:
-        return
+        print("NTFY_TOPIC is not set (check the repository secret) - no phone alert sent.")
+        return False
     req = urllib.request.Request(
         f"https://ntfy.sh/{NTFY_TOPIC}",
         data=message.encode(),
         headers={"Title": title, "Tags": "chart_with_upwards_trend"},
     )
-    urllib.request.urlopen(req, timeout=30)
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        print(f"Phone alert sent (ntfy answered {resp.status}).")
+    return True
 
 
 def build_dashboard(as_of, cur, prev, flow):
@@ -232,6 +248,11 @@ def build_dashboard(as_of, cur, prev, flow):
 
 
 def main():
+    if "--test-push" in sys.argv:
+        if not send_push(f"{FUND_NAME} tracker test", "If you can read this, phone alerts are working."):
+            sys.exit(1)
+        return
+
     as_of, holdings = scrape()
     print(f"Read {len(holdings)} holdings as of {as_of}")
 
