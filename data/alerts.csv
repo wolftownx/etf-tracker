@@ -6,3 +6,5 @@ date,compared_to,ticker,name,action,old_shares,new_shares,raw_change_pct,adjuste
 2026-11-03,2026-11-02,VGSH,Vanguard Short-Term Treasury ETF,SELL,151866,70877,-53.3%,-54.4%,
 2026-11-23,2026-11-20,2696687D,Brookfield Infrastructure Partners Inc,NEW POSITION,0,324939,,,
 2026-11-23,2026-11-20,BIPC,Brookfield Infrastructure Corp,SOLD OUT,324939,0,-100.0%,-100.0%,
+2026-11-24,2026-11-23,2696687D,Brookfield Infrastructure Partners Inc,SOLD OUT,324939,0,-100.0%,-100.0%,
+2026-11-24,2026-11-23,BIP,Brookfield Infrastructure Partners Inc,NEW POSITION,0,325689,,,
